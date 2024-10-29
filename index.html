@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>6969 chat</title>
+    <style>
+      #logout {
+        display: none;
+        margin-top: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <ul id="messages"></ul>
+    <form id="form" action="">
+      <input
+        id="userName"
+        placeholder="Username"
+        autocomplete="off"
+        required
+      /><br />
+      <input
+        id="userPass"
+        type="password"
+        placeholder="Password"
+        autocomplete="off"
+        required
+      /><br />
+      <input
+        id="input"
+        placeholder="Message"
+        autocomplete="off"
+        required
+      /><br /><button>Send</button>
+    </form>
+    <button id="logout">Logout</button>
+
+    <script src="https://cdn.socket.io/socket.io-3.0.0.js"></script>
+    <script>
+      const socket = io();
+
+      const messages = document.getElementById("messages");
+      const input = document.getElementById("input");
+      const userName = document.getElementById("userName");
+      const userPass = document.getElementById("userPass");
+      const logoutButton = document.getElementById("logout");
+
+      // Load username and password from localStorage
+      userName.value = localStorage.getItem("name") || "";
+      userPass.value = localStorage.getItem("pass") || "";
+      if (localStorage.getItem("name")) {
+        userName.disabled = true;
+        userPass.disabled = true;
+        logoutButton.style.display = "block"; // Show logout button
+      }
+
+      document.getElementById("form").addEventListener("submit", function (e) {
+        e.preventDefault();
+        if (input.value) {
+          socket.emit("message", {
+            userName: userName.value,
+            userPass: userPass.value,
+            text: input.value,
+          });
+          input.value = "";
+        }
+      });
+
+      socket.on("connect", () => {
+        console.log("Connected to server");
+      });
+
+      socket.on("message", (msg) => {
+        const item = document.createElement("li");
+        item.textContent = `${msg.userName}: ${msg.text}`;
+        messages.appendChild(item);
+        window.scrollTo(0, document.body.scrollHeight);
+
+        // Handle registration success and disable fields
+        if (
+          msg.text === "Registration successful! Send the message again." ||
+          msg.userName === userName.value
+        ) {
+          userName.disabled = true;
+          userPass.disabled = true;
+          localStorage.setItem("name", userName.value);
+          localStorage.setItem("pass", userPass.value);
+          logoutButton.style.display = "block"; // Show logout button
+        }
+      });
+
+      // Logout functionality
+      logoutButton.addEventListener("click", function () {
+        localStorage.removeItem("name");
+        localStorage.removeItem("pass");
+        userName.disabled = false;
+        userPass.disabled = false;
+        userName.value = "";
+        userPass.value = "";
+        logoutButton.style.display = "none"; // Hide logout button
+      });
+    </script>
+  </body>
+</html>
